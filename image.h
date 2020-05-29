@@ -7,7 +7,7 @@
 class Image
 {
 private:
-    BITMAPINFOHEADER* infoHeader;
+    BITMAPINFOHEADER infoHeader;
     RGBQUAD **rgbQuad;
 
 public:
@@ -17,7 +17,7 @@ public:
     Image(const Image &i);
     int loadImage(const char *filename);
     void writeImage(const char *filename);
-    Image operator=(const Image other);
+    Image& operator=(const Image &other);
     ~Image();
 };
 #endif //IMAGE_H_

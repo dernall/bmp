@@ -1,19 +1,19 @@
 #include "image.h"
-Image::Image()
+Image::Image() : rgbQuad(NULL)
 {
-    infoHeader = new BITMAPINFOHEADER();
-    rgbQuad = NULL;
 }
 
 Image::Image(char mode, unsigned short bCount, int width, int height)
 {
-    infoHeader = new BITMAPINFOHEADER(bCount, width, height);
-    rgbQuad = new RGBQUAD *[infoHeader->height];
-    for (int i = 0; i < infoHeader->height; ++i)
-        rgbQuad[i] = new RGBQUAD[infoHeader->width]; //TODO NOT A POINTER
+    infoHeader.bitCount = bCount;
+    infoHeader.width = width;
+    infoHeader.height = height;
+    rgbQuad = new RGBQUAD *[infoHeader.height];
+    for (int i = 0; i < infoHeader.height; ++i)
+        rgbQuad[i] = new RGBQUAD[infoHeader.width];
 
-    for (int i = 0; i < infoHeader->height; ++i)
-        for (int j = 0; j < infoHeader->width; ++j)
+    for (int i = 0; i < infoHeader.height; ++i)
+        for (int j = 0; j < infoHeader.width; ++j)
         {
             rgbQuad[i][j].red = mode;
             rgbQuad[i][j].green = mode;
@@ -21,27 +21,62 @@ Image::Image(char mode, unsigned short bCount, int width, int height)
             rgbQuad[i][j].reserved = 0;
         }
 }
-
-Image::~Image()
+Image &Image::operator=(const Image &other)
 {
-    for (int i = 0; i < infoHeader->height; ++i)
+    if (this == &other)
+        return *this;
+
+    for (int i = 0; i < infoHeader.height; ++i)
         delete rgbQuad[i];
     delete[] rgbQuad;
-    delete infoHeader;
-}
 
-Image Image::operator=(const Image other)
-{
-    this->infoHeader = other.infoHeader; //TODO MEMORY LEAK
-    this->rgbQuad = other.rgbQuad;
+    infoHeader = other.infoHeader;
+    rgbQuad = new RGBQUAD *[infoHeader.height];
+
+    for (int i = 0; i < infoHeader.height; ++i)
+    {
+        rgbQuad[i] = new RGBQUAD[infoHeader.width];
+    }
+
+    for (int i = 0; i < infoHeader.height; ++i)
+    {
+        for (int j = 0; j < infoHeader.width; ++j)
+        {
+            rgbQuad[i][j] = other.rgbQuad[i][j];
+        }
+    }
     return *this;
-    //TODO
+}
+Image::Image(const Image &other)
+{
+    infoHeader = other.infoHeader;
+    rgbQuad = new RGBQUAD *[infoHeader.height];
+    for (int i = 0; i < infoHeader.height; ++i)
+    {
+        rgbQuad[i] = new RGBQUAD[infoHeader.width];
+    }
+    for (int i = 0; i < infoHeader.height; ++i)
+    {
+        for (int j = 0; j < infoHeader.width; ++j)
+        {
+            rgbQuad[i][j] = other.rgbQuad[i][j];
+        }
+    }
+}
+Image::Image(const char *filename)
+{
+    loadImage(filename);
+}
+Image::~Image()
+{
+    for (int i = 0; i < infoHeader.height; ++i)
+        delete rgbQuad[i];
+    delete[] rgbQuad;
 }
 
 int Image::loadImage(const char *filename)
 {
-    BITMAPFILEHEADER *bfh = new BITMAPFILEHEADER();
-
+    BITMAPFILEHEADER bfh;
     FILE *file;
     file = fopen(filename, "rb");
     if (file == NULL)
@@ -51,30 +86,28 @@ int Image::loadImage(const char *filename)
     }
 
     int tryToRead = 0;
-    tryToRead = fread(&bfh, sizeof(bfh) - 2, 1, file);
+    tryToRead = fread(&bfh, sizeof(BITMAPFILEHEADER) - 2, 1, file);
     if (tryToRead == 0)
     {
         std::cout << "Reading error. Your file is not .bmp"
                   << "\n";
         return -2;
     }
-
-    tryToRead = fread(infoHeader, sizeof(infoHeader), 1, file);
+    tryToRead = fread(&infoHeader, sizeof(BITMAPINFOHEADER), 1, file);
     if (tryToRead == 0)
     {
         std::cout << "Reading error"
                   << "\n";
         return -2;
     }
+    rgbQuad = new RGBQUAD *[infoHeader.height];
+    for (int i = 0; i < infoHeader.height; ++i)
+        rgbQuad[i] = new RGBQUAD[infoHeader.width];
 
-    rgbQuad = new RGBQUAD *[infoHeader->height];
-    for (int i = 0; i < infoHeader->height; ++i)
-        rgbQuad[i] = new RGBQUAD[infoHeader->width];
-
-    int alignment = 4 - (infoHeader->width * 3) % 4;
-    for (int i = 0; i < infoHeader->height; ++i)
+    int alignment = 4 - (infoHeader.width * 3) % 4;
+    for (int i = 0; i < infoHeader.height; ++i)
     {
-        fread(rgbQuad, sizeof(RGBQUAD), infoHeader->width, file);
+        fread(rgbQuad[i], sizeof(RGBQUAD), infoHeader.width, file);
         if (alignment != 4)
         {
             fseek(file, alignment, SEEK_CUR);
@@ -86,20 +119,20 @@ int Image::loadImage(const char *filename)
 void Image::writeImage(const char *filename)
 {
     FILE *file;
-    file = fopen(filename, "rb");
+    file = fopen(filename, "wb");
     if (file == NULL)
     {
-        std::cout << "File(input) reading error" << '\n';
+        std::cout << "File(ouptut) reading error" << '\n';
         exit(0); //TODO EXCEPTIONS
     }
-    BITMAPFILEHEADER *bfh = new BITMAPFILEHEADER(infoHeader->bitCount, infoHeader->width, infoHeader->height);
+    BITMAPFILEHEADER bfh(infoHeader.bitCount, infoHeader.width, infoHeader.height);
     char buf = 0;
-    int alignment = 4 - (infoHeader->width * 3) % 4;
-    fwrite(&bfh, sizeof(bfh) - 2, 1, file);
-    fwrite(infoHeader, sizeof(infoHeader), 1, file);
-    for (int i = 0; i < infoHeader->height; ++i)
+    int alignment = 4 - (infoHeader.width * 3) % 4;
+    fwrite(&bfh, sizeof(BITMAPFILEHEADER) - 2, 1, file);
+    fwrite(&infoHeader, sizeof(BITMAPINFOHEADER), 1, file);
+    for (int i = 0; i < infoHeader.height; ++i)
     {
-        fwrite(rgbQuad[i], sizeof(RGBQUAD), infoHeader->width, file);
+        fwrite(rgbQuad[i], sizeof(RGBQUAD), infoHeader.width, file);
         if (alignment != 4)
         {
             fwrite(&buf, 1, alignment, file);
