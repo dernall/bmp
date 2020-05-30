@@ -27,15 +27,20 @@ Image &Image::operator=(const Image &other)
         return *this;
 
     for (int i = 0; i < infoHeader.height; ++i)
+    {
+        delete rgbTriple[i];
         delete rgbQuad[i];
+    }
+    delete[] rgbTriple;
     delete[] rgbQuad;
 
     infoHeader = other.infoHeader;
     rgbQuad = new RGBQUAD *[infoHeader.height];
-
+    rgbTriple = new RGBTRIPLE *[infoHeader.height];
     for (int i = 0; i < infoHeader.height; ++i)
     {
         rgbQuad[i] = new RGBQUAD[infoHeader.width];
+        rgbTriple[i] = new RGBTRIPLE[infoHeader.width];
     }
 
     for (int i = 0; i < infoHeader.height; ++i)
@@ -43,6 +48,7 @@ Image &Image::operator=(const Image &other)
         for (int j = 0; j < infoHeader.width; ++j)
         {
             rgbQuad[i][j] = other.rgbQuad[i][j];
+            rgbTriple[i][j] = other.rgbTriple[i][j];
         }
     }
     return *this;
@@ -70,8 +76,12 @@ Image::Image(const char *filename)
 Image::~Image()
 {
     for (int i = 0; i < infoHeader.height; ++i)
+    {
         delete rgbQuad[i];
+        delete rgbTriple[i];
+    }
     delete[] rgbQuad;
+    delete[] rgbTriple;
 }
 
 int Image::loadImage(const char *filename)
@@ -100,14 +110,24 @@ int Image::loadImage(const char *filename)
                   << "\n";
         return -2;
     }
+    rgbTriple = new RGBTRIPLE *[infoHeader.height];
     rgbQuad = new RGBQUAD *[infoHeader.height];
     for (int i = 0; i < infoHeader.height; ++i)
+    {
+        rgbTriple[i] = new RGBTRIPLE[infoHeader.width];
         rgbQuad[i] = new RGBQUAD[infoHeader.width];
-
+    }
     int alignment = 4 - (infoHeader.width * 3) % 4;
     for (int i = 0; i < infoHeader.height; ++i)
     {
-        fread(rgbQuad[i], sizeof(RGBQUAD), infoHeader.width, file);
+        if (infoHeader.bitCount == 24)
+        {
+            fread(rgbTriple[i], sizeof(RGBTRIPLE), infoHeader.width, file);
+        }
+        else if (infoHeader.bitCount == 32)
+        {
+            fread(rgbQuad[i], sizeof(RGBQUAD), infoHeader.width, file);
+        }
         if (alignment != 4)
         {
             fseek(file, alignment, SEEK_CUR);
@@ -125,17 +145,29 @@ void Image::writeImage(const char *filename)
         std::cout << "File(ouptut) reading error" << '\n';
         exit(0); //TODO EXCEPTIONS
     }
+
+    // infoHeader.bitCount = 32;
+    // infoHeader.sizeImage = infoHeader.bitCount * infoHeader.height * infoHeader.width;
+
     BITMAPFILEHEADER bfh(infoHeader.bitCount, infoHeader.width, infoHeader.height);
     char buf = 0;
     int alignment = 4 - (infoHeader.width * 3) % 4;
     fwrite(&bfh, sizeof(BITMAPFILEHEADER) - 2, 1, file);
     fwrite(&infoHeader, sizeof(BITMAPINFOHEADER), 1, file);
-    for (int i = 0; i < infoHeader.height; ++i)
+    for (int i = 0; i < infoHeader.height; i++)
     {
-        fwrite(rgbQuad[i], sizeof(RGBQUAD), infoHeader.width, file);
+        if (infoHeader.bitCount == 24)
+        {
+            fwrite(rgbTriple[i], sizeof(RGBTRIPLE), infoHeader.width, file);
+        }
+        else if (infoHeader.bitCount == 32)
+        {
+            fwrite(rgbQuad[i], sizeof(RGBQUAD), infoHeader.width, file);
+        }
         if (alignment != 4)
         {
             fwrite(&buf, 1, alignment, file);
         }
     }
+    std::cout << "PIZDA" << infoHeader.bitCount << std::endl;
 }

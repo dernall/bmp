@@ -9,6 +9,7 @@ class Image
 private:
     BITMAPINFOHEADER infoHeader;
     RGBQUAD **rgbQuad;
+    RGBTRIPLE **rgbTriple;
 
 public:
     Image();

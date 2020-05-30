@@ -65,4 +65,11 @@ struct RGBQUAD
     unsigned char blue;
     unsigned char reserved;
 };
+
+struct RGBTRIPLE
+{
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+};
 #endif // BITMAPHEADER_H_
