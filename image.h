@@ -18,9 +18,9 @@ public:
     Image(const Image &other);
     int loadImage(const char *filename);
     void writeImage(const char *filename);
-    Image& operator=(const Image &other);
-    Image& operator/=(const Image &other);
-    Image& operator/(const short depth);
+    Image &operator=(const Image &other);
+    Image &operator/=(const Image &other);
+    Image &operator/(const short depth);
     ~Image();
 };
 #endif //IMAGE_H_
