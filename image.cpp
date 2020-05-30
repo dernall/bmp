@@ -131,7 +131,7 @@ void Image::writeImage(const char *filename)
 
     file = fopen(filename, "wb");
     assert(file != NULL && "Error with opening a file");
-    
+
     BITMAPFILEHEADER bfh(infoHeader.bitCount, infoHeader.width, infoHeader.height);
     char buf = 0;
     int alignment = 4 - (infoHeader.width * 3) % 4;
