@@ -143,6 +143,7 @@ void Image::writeImage(const char *filename)
 Image &Image::operator/=(const Image &other)
 {
     assert(infoHeader.bitCount = other.infoHeader.bitCount);
+    
 }
 
 Image &Image::operator/(const short depth)
