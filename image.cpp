@@ -3,7 +3,7 @@ Image::Image() : rgbQuad(NULL)
 {
 }
 
-Image::Image(char mode, unsigned short bCount, int width, int height)
+Image::Image(const char mode, const unsigned short bCount, const int width, const int height)
 {
     infoHeader.bitCount = bCount;
     infoHeader.width = width;
@@ -23,10 +23,7 @@ Image::Image(char mode, unsigned short bCount, int width, int height)
 }
 Image &Image::operator=(const Image &other)
 {
-    if (this->infoHeader.sizeImage != 0){
-        std::cout << "Trying to rewrite existing image. Error!" << std::endl;
-        exit(0);
-    }
+    assert(infoHeader.sizeImage == 0);
 
     for (int i = 0; i < infoHeader.height; ++i)
     {
@@ -84,27 +81,18 @@ int Image::loadImage(const char *filename)
     BITMAPFILEHEADER bfh;
     FILE *file;
     file = fopen(filename, "rb");
-    if (file == NULL)
-    {
-        std::cout << "File(input) reading error" << '\n';
-        return 0; //TODO EXCEPTIONS
-    }
+
+    assert(file != NULL && "Error with opening a file");
 
     int tryToRead = 0;
     tryToRead = fread(&bfh, sizeof(BITMAPFILEHEADER) - 2, 1, file);
-    if (tryToRead == 0)
-    {
-        std::cout << "Reading error. Your file is not .bmp"
-                  << "\n";
-        return 0;
-    }
+
+    assert(tryToRead != 0 && "Reading error. Your file is not .bmp");
+
     tryToRead = fread(&infoHeader, sizeof(BITMAPINFOHEADER), 1, file);
-    if (tryToRead == 0)
-    {
-        std::cout << "Reading error"
-                  << "\n";
-        return 0;
-    }
+
+    assert(tryToRead != 0 && "Reading error");
+
     RGBTRIPLE rgbTriple;
     rgbQuad = new RGBQUAD *[infoHeader.height];
     for (int i = 0; i < infoHeader.height; ++i)
@@ -140,16 +128,10 @@ int Image::loadImage(const char *filename)
 void Image::writeImage(const char *filename)
 {
     FILE *file;
+
     file = fopen(filename, "wb");
-    if (file == NULL)
-    {
-        std::cout << "File(ouptut) reading error" << '\n';
-        exit(0); //TODO EXCEPTIONS
-    }
-
-    // infoHeader.bitCount = 32;
-    // infoHeader.sizeImage = infoHeader.bitCount * infoHeader.height * infoHeader.width;
-
+    assert(file != NULL && "Error with opening a file");
+  
     BITMAPFILEHEADER bfh(infoHeader.bitCount, infoHeader.width, infoHeader.height);
     char buf = 0;
     int alignment = 4 - (infoHeader.width * 3) % 4;
@@ -177,5 +159,3 @@ void Image::writeImage(const char *filename)
             fwrite(&buf, 1, alignment, file);
         }
     }
-    std::cout << "PIZDA" << infoHeader.bitCount << std::endl;
-}
