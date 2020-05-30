@@ -23,24 +23,22 @@ Image::Image(char mode, unsigned short bCount, int width, int height)
 }
 Image &Image::operator=(const Image &other)
 {
-    if (this == &other)
-        return *this;
+    if (this->infoHeader.sizeImage != 0){
+        std::cout << "Trying to rewrite existing image. Error!" << std::endl;
+        exit(0);
+    }
 
     for (int i = 0; i < infoHeader.height; ++i)
     {
-        delete rgbTriple[i];
         delete rgbQuad[i];
     }
-    delete[] rgbTriple;
     delete[] rgbQuad;
 
     infoHeader = other.infoHeader;
     rgbQuad = new RGBQUAD *[infoHeader.height];
-    rgbTriple = new RGBTRIPLE *[infoHeader.height];
     for (int i = 0; i < infoHeader.height; ++i)
     {
         rgbQuad[i] = new RGBQUAD[infoHeader.width];
-        rgbTriple[i] = new RGBTRIPLE[infoHeader.width];
     }
 
     for (int i = 0; i < infoHeader.height; ++i)
@@ -48,7 +46,6 @@ Image &Image::operator=(const Image &other)
         for (int j = 0; j < infoHeader.width; ++j)
         {
             rgbQuad[i][j] = other.rgbQuad[i][j];
-            rgbTriple[i][j] = other.rgbTriple[i][j];
         }
     }
     return *this;
@@ -78,10 +75,8 @@ Image::~Image()
     for (int i = 0; i < infoHeader.height; ++i)
     {
         delete rgbQuad[i];
-        delete rgbTriple[i];
     }
     delete[] rgbQuad;
-    delete[] rgbTriple;
 }
 
 int Image::loadImage(const char *filename)
@@ -92,7 +87,7 @@ int Image::loadImage(const char *filename)
     if (file == NULL)
     {
         std::cout << "File(input) reading error" << '\n';
-        return -3; //TODO EXCEPTIONS
+        return 0; //TODO EXCEPTIONS
     }
 
     int tryToRead = 0;
@@ -101,20 +96,19 @@ int Image::loadImage(const char *filename)
     {
         std::cout << "Reading error. Your file is not .bmp"
                   << "\n";
-        return -2;
+        return 0;
     }
     tryToRead = fread(&infoHeader, sizeof(BITMAPINFOHEADER), 1, file);
     if (tryToRead == 0)
     {
         std::cout << "Reading error"
                   << "\n";
-        return -2;
+        return 0;
     }
-    rgbTriple = new RGBTRIPLE *[infoHeader.height];
+    RGBTRIPLE rgbTriple;
     rgbQuad = new RGBQUAD *[infoHeader.height];
     for (int i = 0; i < infoHeader.height; ++i)
     {
-        rgbTriple[i] = new RGBTRIPLE[infoHeader.width];
         rgbQuad[i] = new RGBQUAD[infoHeader.width];
     }
     int alignment = 4 - (infoHeader.width * 3) % 4;
@@ -122,7 +116,14 @@ int Image::loadImage(const char *filename)
     {
         if (infoHeader.bitCount == 24)
         {
-            fread(rgbTriple[i], sizeof(RGBTRIPLE), infoHeader.width, file);
+            for (int j = 0; j < infoHeader.width; ++j)
+            {
+                fread(&rgbTriple, sizeof(RGBTRIPLE), 1, file);
+                rgbQuad[i][j].red = rgbTriple.red;
+                rgbQuad[i][j].green = rgbTriple.green;
+                rgbQuad[i][j].blue = rgbTriple.blue;
+                rgbQuad[i][j].reserved = 0;
+            }
         }
         else if (infoHeader.bitCount == 32)
         {
@@ -133,7 +134,7 @@ int Image::loadImage(const char *filename)
             fseek(file, alignment, SEEK_CUR);
         }
     }
-    return 0;
+    return 1;
 }
 
 void Image::writeImage(const char *filename)
@@ -154,11 +155,18 @@ void Image::writeImage(const char *filename)
     int alignment = 4 - (infoHeader.width * 3) % 4;
     fwrite(&bfh, sizeof(BITMAPFILEHEADER) - 2, 1, file);
     fwrite(&infoHeader, sizeof(BITMAPINFOHEADER), 1, file);
+    RGBTRIPLE rgbTriple;
     for (int i = 0; i < infoHeader.height; i++)
     {
         if (infoHeader.bitCount == 24)
         {
-            fwrite(rgbTriple[i], sizeof(RGBTRIPLE), infoHeader.width, file);
+            for (int j = 0; j < infoHeader.width; ++j)
+            {
+                rgbTriple.red = rgbQuad[i][j].red;
+                rgbTriple.green = rgbQuad[i][j].green;
+                rgbTriple.blue = rgbQuad[i][j].blue;
+                fwrite(&rgbTriple, sizeof(RGBTRIPLE), 1, file);
+            }
         }
         else if (infoHeader.bitCount == 32)
         {
