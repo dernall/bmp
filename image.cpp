@@ -131,7 +131,7 @@ void Image::writeImage(const char *filename)
 
     file = fopen(filename, "wb");
     assert(file != NULL && "Error with opening a file");
-  
+
     BITMAPFILEHEADER bfh(infoHeader.bitCount, infoHeader.width, infoHeader.height);
     char buf = 0;
     int alignment = 4 - (infoHeader.width * 3) % 4;
@@ -159,3 +159,43 @@ void Image::writeImage(const char *filename)
             fwrite(&buf, 1, alignment, file);
         }
     }
+}
+
+Image& Image::operator/= (const Image &other)
+{
+    assert((other.infoHeader.width % this->infoHeader.width == 0 && other.infoHeader.height % this->infoHeader.height == 0));
+    Image *temp = new Image();
+    temp->infoHeader = other.infoHeader;
+    int rX, rY, i1 = 0, j1 = 0;
+
+    int repeatX = other.infoHeader.width / this->infoHeader.width;
+    int repeatY = other.infoHeader.height / this->infoHeader.height;
+
+    temp->rgbQuad = new RGBQUAD *[other.infoHeader.height];
+    for (int i = 0; i < other.infoHeader.height; ++i)
+    {
+        temp->rgbQuad[i] = new RGBQUAD[other.infoHeader.width];
+    }
+
+    for (int i = 0; i < other.infoHeader.height; ++i)
+    {
+        for (rY = 0; rY < repeatY; ++rY)
+        {
+            for (int j = 0; j < other.infoHeader.width; ++j)
+            {
+                for (rX = 0; rX < repeatX; ++rX)
+                {
+                    temp->rgbQuad[i + rY][j + rX] = this->rgbQuad[i1][j1];
+                }
+                j += repeatX - 1;
+                j1++;
+            }
+            j1 = 0;
+        }
+        i += repeatY - 1;
+        i1++;
+    }
+    this->rgbQuad = temp->rgbQuad;
+    this->infoHeader = temp->infoHeader;
+    return *this;
+}
