@@ -3,7 +3,7 @@ Image::Image() : rgbQuad(NULL)
 {
 }
 
-Image::Image(char mode, unsigned short bCount, int width, int height)
+Image::Image(const char mode, const unsigned short bCount, const int width, const int height)
 {
     infoHeader.bitCount = bCount;
     infoHeader.width = width;
@@ -82,7 +82,7 @@ int Image::loadImage(const char *filename)
     if (file == NULL)
     {
         std::cout << "File(input) reading error" << '\n';
-        return -3; //TODO EXCEPTIONS
+        return 0; //TODO EXCEPTIONS
     }
 
     int tryToRead = 0;
@@ -91,14 +91,14 @@ int Image::loadImage(const char *filename)
     {
         std::cout << "Reading error. Your file is not .bmp"
                   << "\n";
-        return -2;
+        return 0;
     }
     tryToRead = fread(&infoHeader, sizeof(BITMAPINFOHEADER), 1, file);
     if (tryToRead == 0)
     {
         std::cout << "Reading error"
                   << "\n";
-        return -2;
+        return 0;
     }
     rgbQuad = new RGBQUAD *[infoHeader.height];
     for (int i = 0; i < infoHeader.height; ++i)
@@ -113,7 +113,7 @@ int Image::loadImage(const char *filename)
             fseek(file, alignment, SEEK_CUR);
         }
     }
-    return 0;
+    return 1;
 }
 
 void Image::writeImage(const char *filename)
@@ -138,4 +138,13 @@ void Image::writeImage(const char *filename)
             fwrite(&buf, 1, alignment, file);
         }
     }
+}
+
+Image &Image::operator/=(const Image &other)
+{
+    assert(infoHeader.bitCount = other.infoHeader.bitCount);
+}
+
+Image &Image::operator/(const short depth)
+{
 }
