@@ -160,3 +160,69 @@ void Image::writeImage(const char *filename)
         }
     }
 }
+
+Image &Image::operator/=(const Image &other)
+{
+    assert((other.infoHeader.width % this->infoHeader.width == 0 && other.infoHeader.height % this->infoHeader.height == 0) || (this->infoHeader.width % other.infoHeader.width == 0 && this->infoHeader.height % other.infoHeader.height == 0));
+
+    Image *temp = new Image();
+    temp->infoHeader = other.infoHeader;
+    int tempI = 0;
+
+    if (other.infoHeader.width >= this->infoHeader.width && other.infoHeader.height >= this->infoHeader.height)
+    {
+        int repeatX = other.infoHeader.width / this->infoHeader.width;
+        int repeatY = other.infoHeader.height / this->infoHeader.height;
+
+        temp->rgbQuad = new RGBQUAD *[other.infoHeader.height];
+        for (int i = 0; i < other.infoHeader.height; ++i)
+        {
+            temp->rgbQuad[i] = new RGBQUAD[other.infoHeader.width];
+        }
+        for (int i = 0; i < other.infoHeader.height; ++i)
+        {
+            for (int rY = 0; rY < repeatY; ++rY)
+            {
+                int tempJ = 0;
+                for (int j = 0; j < other.infoHeader.width; ++j)
+                {
+                    for (int rX = 0; rX < repeatX; ++rX)
+                    {
+                        temp->rgbQuad[i + rY][j + rX] = this->rgbQuad[tempI][tempJ];
+                    }
+                    j += repeatX - 1;
+                    ++tempJ;
+                }
+                tempJ = 0;
+            }
+            i += repeatY - 1;
+            ++tempI;
+        }
+    }
+    else if (other.infoHeader.width <= this->infoHeader.width && other.infoHeader.height <= this->infoHeader.height)
+    {
+        int repeatX = this->infoHeader.width / other.infoHeader.width;
+        int repeatY = this->infoHeader.height / other.infoHeader.height;
+
+        temp->rgbQuad = new RGBQUAD *[other.infoHeader.height];
+        for (int i = 0; i < other.infoHeader.height; ++i)
+        {
+            temp->rgbQuad[i] = new RGBQUAD[other.infoHeader.width];
+        }
+
+        for (int i = 0; i < other.infoHeader.height; ++i)
+        {
+            int tempJ = 0;
+            for (int j = 0; j < other.infoHeader.width; ++j)
+            {
+                temp->rgbQuad[i][j] = this->rgbQuad[tempI][tempJ];
+                tempJ += repeatX;
+            }
+            tempI += repeatY;
+        }
+    }
+
+    this->rgbQuad = temp->rgbQuad;
+    this->infoHeader = temp->infoHeader;
+    return *this;
+}
