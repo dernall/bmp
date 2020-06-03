@@ -4,12 +4,14 @@
 #include "bitmap_utils.h"
 #include <iostream>
 #include <cassert>
+#include <cmath>
 
 class Image
 {
 private:
     BITMAPINFOHEADER infoHeader;
     RGBQUAD **rgbQuad;
+    RGBQUAD *palette;
 
 public:
     Image();

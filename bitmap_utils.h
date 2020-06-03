@@ -15,10 +15,10 @@ struct BITMAPINFOHEADER
     int colorImportant;
 
     BITMAPINFOHEADER();
-    BITMAPINFOHEADER(unsigned short bCount, int _width, int _height);
-    
+    BITMAPINFOHEADER(const unsigned short bCount, const int _width, const int _height);
+
     BITMAPINFOHEADER operator=(const BITMAPINFOHEADER &other);
-    ~BITMAPINFOHEADER(); 
+    ~BITMAPINFOHEADER();
 };
 struct BITMAPFILEHEADER
 {
@@ -30,7 +30,7 @@ struct BITMAPFILEHEADER
 
     BITMAPFILEHEADER();
 
-    BITMAPFILEHEADER(unsigned short bCount, int width, int height);
+    BITMAPFILEHEADER(const unsigned short bCount, const int width, const int height);
     ~BITMAPFILEHEADER();
 };
 
