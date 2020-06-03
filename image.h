@@ -19,7 +19,7 @@ public:
     Image(const char *filename);
     Image(const Image &other);
     int loadImage(const char *filename);
-    void writeImage(const char *filename);
+    void writeImage(const char *filename) const;
     Image &operator=(const Image &other);
     Image &operator/=(const Image &other);
     Image &operator/(const short depth);

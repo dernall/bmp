@@ -88,7 +88,6 @@ Image::Image(const char *filename)
 }
 Image::~Image()
 {
-
     for (int i = 0; i < infoHeader.height; ++i)
         delete rgbQuad[i];
     delete[] rgbQuad;
@@ -128,14 +127,18 @@ int Image::loadImage(const char *filename)
             {
                 if (infoHeader.bitCount == 1)
                 {
+                    if (infoHeader.width % 8 == 0)
+                        alignment = (4 - (infoHeader.width / 8) % 4) % 4;
+                    else
+                        alignment = (4 - ((int)trunc(infoHeader.width / 8) + 1) % 4) % 4;
                     unsigned char pix = 0;
                     unsigned char mask = 0x80;
                     fread(&pix, sizeof(unsigned char), 1, file);
-                    int temp = 7;
+                    int shift = 7;
                     for (int k = 0; k < 8; ++k, ++j)
                     {
-                        rgbQuad[i][j].red = rgbQuad[i][j].blue = rgbQuad[i][j].green = (pix & (mask >> k) >> temp);
-                        --temp;
+                        rgbQuad[i][j].red = rgbQuad[i][j].blue = rgbQuad[i][j].green = ((pix & (mask >> k)) >> shift);
+                        --shift;
                     }
                 }
                 else if (infoHeader.bitCount == 8)
@@ -180,7 +183,7 @@ int Image::loadImage(const char *filename)
     return 1;
 }
 
-void Image::writeImage(const char *filename)
+void Image::writeImage(const char *filename) const
 {
     assert(infoHeader.sizeImage != 0 && "Invalid operation with empty image");
     FILE *file;
@@ -188,18 +191,19 @@ void Image::writeImage(const char *filename)
     assert(file != NULL && "Error with opening a file");
 
     BITMAPFILEHEADER bfh(infoHeader.bitCount, infoHeader.width, infoHeader.height);
-    if (infoHeader.bitCount == 1)
-        bfh.reserved2 = 62;
-    std::cout << bfh.size << std::endl
-              << infoHeader.height << std::endl
-              << infoHeader.width;
     char buf = 0;
     int alignment = 4 - (infoHeader.width * 3) % 4;
     fwrite(&bfh, sizeof(BITMAPFILEHEADER) - 2, 1, file);
     fwrite(&infoHeader, sizeof(BITMAPINFOHEADER), 1, file);
     if (infoHeader.bitCount == 1 || infoHeader.bitCount == 4 || infoHeader.bitCount == 8)
     {
-        alignment = (infoHeader.width * 3) % 4;
+        if (infoHeader.bitCount == 1)
+        {
+            if (infoHeader.width % 8 == 0)
+                alignment = (4 - (infoHeader.width / 8) % 4) % 4;
+            else
+                alignment = (4 - ((int)trunc(infoHeader.width / 8) + 1) % 4) % 4;
+        }
         unsigned char pix = 0;
         for (int i = 0; i < pow(2, infoHeader.bitCount); ++i)
             fwrite(&palette[i], sizeof(RGBQUAD), 1, file);
@@ -210,16 +214,16 @@ void Image::writeImage(const char *filename)
                 pix = 0;
                 if (infoHeader.bitCount == 1)
                 {
-                    for (int k = 0; k < 8; ++k)
+                    for (int k = 0; k < 8; ++k, ++j)
                     {
                         if (k > 0)
                             pix = pix << 1;
                         if (j >= infoHeader.width)
                         {
-                            pix = pix << 1;
+                            continue;
                         }
                         else
-                            pix += rgbQuad[i][j++].red;
+                            pix += rgbQuad[i][j].red;
                     }
                 }
                 else
@@ -326,9 +330,11 @@ Image &Image::operator/=(const Image &other)
 Image &Image::operator/(const short depth)
 {
     assert(infoHeader.sizeImage != 0 && "Invalid operation with empty image");
-    if (infoHeader.bitCount == 32 || infoHeader.bitCount == 24)
+    int num = pow(2, depth);
+    if (infoHeader.bitCount == 8 || infoHeader.bitCount == 32 || infoHeader.bitCount == 24)
     {
-        int num = pow(2, depth);
+        if (infoHeader.bitCount == 8)
+            delete[] palette;
         palette = new RGBQUAD[num];
         for (int i = 0; i < num; ++i)
             palette[i].red = palette[i].green = palette[i].blue = i;
