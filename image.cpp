@@ -1,7 +1,22 @@
 #include "image.h"
+
+
+/**
+*An empty constructor 
+*/
+
 Image::Image() : rgbQuad(NULL)
 {
 }
+
+/**
+*A constructor 
+*taking four arguments and returning an image
+*param mode a color of pixels
+*param bCount a number of bits per one pixel
+*param width a width of the image
+*param height a height of the image
+*/
 
 Image::Image(const char mode, const unsigned short bCount, const int width, const int height)
 {
@@ -35,6 +50,13 @@ Image::Image(const char mode, const unsigned short bCount, const int width, cons
             rgbQuad[i][j].reserved = 0;
         }
 }
+
+/**
+*An assignment operator 
+*taking one argument and returning an image equal to the image from an argument
+*param other an image that should be assigned
+*/
+
 Image &Image::operator=(const Image &other)
 {
     assert(infoHeader.sizeImage == 0 && "Could not define this image to iamge that is initialised");
@@ -63,6 +85,13 @@ Image &Image::operator=(const Image &other)
             rgbQuad[i][j] = other.rgbQuad[i][j];
     return *this;
 }
+
+/**
+*A copy constructor 
+*taking one argument and returning an image equal to the image from an argument
+*param other the image that should be copied
+*/
+
 Image::Image(const Image &other)
 {
     infoHeader = other.infoHeader;
@@ -82,10 +111,22 @@ Image::Image(const Image &other)
         for (int j = 0; j < infoHeader.width; ++j)
             rgbQuad[i][j] = other.rgbQuad[i][j];
 }
+
+/**
+*A constructor 
+*taking one argument and returning an image generated from .bmp file
+*param filename the name of file 
+*/
+
 Image::Image(const char *filename)
 {
     loadImage(filename);
 }
+
+/**
+*A destructor
+*/
+
 Image::~Image()
 {
     for (int i = 0; i < infoHeader.height; ++i)
@@ -94,6 +135,12 @@ Image::~Image()
     if (infoHeader.bitCount == 1 || infoHeader.bitCount == 4 || infoHeader.bitCount == 8)
         delete[] palette;
 }
+
+/**
+*A method that generate an image from the file
+*taking one argument and returning an image generated from .bmp file
+*param filename the name of file
+*/
 
 int Image::loadImage(const char *filename)
 {
@@ -183,6 +230,12 @@ int Image::loadImage(const char *filename)
     return 1;
 }
 
+/**
+*A method that save an image to the file
+*taking one argument
+*param filename the name of file
+*/
+
 void Image::writeImage(const char *filename) const
 {
     assert(infoHeader.sizeImage != 0 && "Invalid operation with empty image");
@@ -262,6 +315,13 @@ void Image::writeImage(const char *filename) const
     fclose(file);
 }
 
+
+/**
+*Scaling operator
+*taking one argument and returning an image scaled to the image from argument
+*param other the image with target mentions
+*/
+
 Image &Image::operator/=(const Image &other)
 {
     assert(infoHeader.sizeImage != 0 && "Invalid operation with empty image");
@@ -326,6 +386,12 @@ Image &Image::operator/=(const Image &other)
     this->infoHeader = temp->infoHeader;
     return *this;
 }
+
+/**
+*Changing depth operator
+*taking one argument and returning an image with a new depth
+*param depth new depth of pixels
+*/
 
 Image &Image::operator/(const short depth)
 {
