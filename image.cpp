@@ -2,7 +2,7 @@
 
 
 /**
-*An empty constructor 
+*An empty constructor
 */
 
 Image::Image() : rgbQuad(NULL)
@@ -10,7 +10,7 @@ Image::Image() : rgbQuad(NULL)
 }
 
 /**
-*A constructor 
+*A constructor
 *taking four arguments and returning an image
 *param mode a color of pixels
 *param bCount a number of bits per one pixel
@@ -52,7 +52,7 @@ Image::Image(const char mode, const unsigned short bCount, const int width, cons
 }
 
 /**
-*An assignment operator 
+*An assignment operator
 *taking one argument and returning an image equal to the image from an argument
 *param other an image that should be assigned
 */
@@ -87,7 +87,7 @@ Image &Image::operator=(const Image &other)
 }
 
 /**
-*A copy constructor 
+*A copy constructor
 *taking one argument and returning an image equal to the image from an argument
 *param other the image that should be copied
 */
@@ -113,9 +113,9 @@ Image::Image(const Image &other)
 }
 
 /**
-*A constructor 
+*A constructor
 *taking one argument and returning an image generated from .bmp file
-*param filename the name of file 
+*param filename the name of file
 */
 
 Image::Image(const char *filename)
@@ -244,6 +244,10 @@ void Image::writeImage(const char *filename) const
     assert(file != NULL && "Error with opening a file");
 
     BITMAPFILEHEADER bfh(infoHeader.bitCount, infoHeader.width, infoHeader.height);
+    if (infoHeader.bitCount == 1)
+        bfh.reserved2 = 62;
+    if (infoHeader.bitCount == 8)
+        bfh.reserved2 = 1078;
     char buf = 0;
     int alignment = 4 - (infoHeader.width * 3) % 4;
     fwrite(&bfh, sizeof(BITMAPFILEHEADER) - 2, 1, file);
@@ -257,6 +261,8 @@ void Image::writeImage(const char *filename) const
             else
                 alignment = (4 - ((int)trunc(infoHeader.width / 8) + 1) % 4) % 4;
         }
+        if (infoHeader.bitCount == 8)
+            alignment = (infoHeader.width * 3) % 4;
         unsigned char pix = 0;
         for (int i = 0; i < pow(2, infoHeader.bitCount); ++i)
             fwrite(&palette[i], sizeof(RGBQUAD), 1, file);

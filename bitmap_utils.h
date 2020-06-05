@@ -1,6 +1,6 @@
 #ifndef BITMAPHEADER_H_
 #define BITMAPHEADER_H_
-struct BITMAPINFOHEADER
+struct BITMAPINFOHEADER //Info header of BMP file.
 {
     int size;
     int width;
@@ -15,12 +15,12 @@ struct BITMAPINFOHEADER
     int colorImportant;
 
     BITMAPINFOHEADER();
-    BITMAPINFOHEADER(const unsigned short bCount, const int _width, const int _height);
-
+    BITMAPINFOHEADER(const unsigned short bCount, const int _width, const int _height); //Constructor for header
     BITMAPINFOHEADER operator=(const BITMAPINFOHEADER &other);
     ~BITMAPINFOHEADER();
 };
-struct BITMAPFILEHEADER
+
+struct BITMAPFILEHEADER //File header of BMP file.
 {
     short int type;
     int size;
@@ -29,12 +29,11 @@ struct BITMAPFILEHEADER
     int offsetBits;
 
     BITMAPFILEHEADER();
-
-    BITMAPFILEHEADER(const unsigned short bCount, const int width, const int height);
+    BITMAPFILEHEADER(const unsigned short bCount, const int width, const int height); //Constructor for header
     ~BITMAPFILEHEADER();
 };
 
-struct RGBQUAD
+struct RGBQUAD //Struct for storing 32bit pixel info.
 {
     unsigned char red;
     unsigned char green;
@@ -42,7 +41,7 @@ struct RGBQUAD
     unsigned char reserved;
 };
 
-struct RGBTRIPLE
+struct RGBTRIPLE //Struct for storing 24bit pixel info
 {
     unsigned char red;
     unsigned char green;
