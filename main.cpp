@@ -3,11 +3,10 @@
 int main(int argc, char **argv)
 {
 	// CREATION
-	//Image test(char(1), 1, 2304, 1296);
-	Image img24("alallal.bmp");
-	//Image img2("input.bmp");
+	//Image test(char(15), 4, 7, 8);
+	Image img24("input8BIT.bmp");
 	//test = img24; Will be failed
-	Image r = img24 / 1;
+	Image r = img24 / 4;
 	//Image img = img24;
 	//Image imag(img);
 	//img24.writeImage("zhopa.bmp");
